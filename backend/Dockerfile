@@ -12,5 +12,6 @@ WORKDIR /app
 COPY --from=build /bin/server /bin/server
 COPY migrations ./migrations
 EXPOSE 8080
-# Entry runs migrate + seed then serves; overridden per-service in compose if needed.
-CMD ["/bin/server", "serve"]
+# Entry applies migrations, seeds the tax_rules table, then serves — so a fresh
+# deploy (e.g. Railway) self-migrates. Compose overrides the command if needed.
+CMD ["sh", "-c", "/bin/server migrate && /bin/server seed && /bin/server serve"]
