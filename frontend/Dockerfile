@@ -11,6 +11,12 @@ RUN npm run build
 
 # --- serve stage ---
 FROM nginx:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf is a template: the base image's entrypoint runs envsubst on files
+# in /etc/nginx/templates/ at startup. ENVSUBST_FILTER=PORT so only ${PORT} is
+# substituted (nginx's own $uri etc. are left intact). PORT defaults to 80 and
+# is overridden at runtime by the platform (e.g. Railway).
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
+ENV PORT=80
+ENV NGINX_ENVSUBST_FILTER=PORT
 EXPOSE 80
