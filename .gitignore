@@ -1,0 +1,13 @@
+# env
+.env
+
+# node
+frontend/node_modules
+frontend/dist
+
+# go
+backend/server
+backend/tmp
+
+# os
+.DS_Store

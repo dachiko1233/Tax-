@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-stone-50 text-stone-800 font-sans antialiased;
+}
+
+h1, h2, h3 {
+  @apply font-serif;
+}
+
+/* Visible keyboard focus everywhere, per spec. */
+:focus-visible {
+  @apply outline-none ring-2 ring-teal-600 ring-offset-2 ring-offset-stone-50;
+}

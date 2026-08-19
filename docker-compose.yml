@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Host 5433 -> container 5432 to avoid clashing with a local Postgres.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT}
+      APP_BASE_URL: ${APP_BASE_URL}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      DODO_PAYMENTS_API_KEY: ${DODO_PAYMENTS_API_KEY}
+      DODO_PAYMENTS_WEBHOOK_SECRET: ${DODO_PAYMENTS_WEBHOOK_SECRET}
+      DODO_PRO_PRODUCT_ID: ${DODO_PRO_PRODUCT_ID}
+      DODO_ENV: ${DODO_ENV}
+    ports:
+      - "8080:8080"
+    # Apply migrations, seed the rules table, then serve — one command online.
+    command: >
+      sh -c "/bin/server migrate && /bin/server seed && /bin/server serve"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    depends_on:
+      - backend
+    ports:
+      - "5174:80"
+
+volumes:
+  pgdata:

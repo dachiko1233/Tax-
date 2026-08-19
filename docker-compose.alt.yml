@@ -1,0 +1,58 @@
+# Temporary parallel stack on alternate host ports (8081 / 5175 / 5434), used
+# only because the original stack's containers are wedged by a snap-Docker
+# daemon issue that needs root to clear. Self-contained: its own DB volume.
+#
+#   docker compose -f docker-compose.alt.yml -p taxisalt up -d
+#   open http://localhost:5175
+#
+# Tear down (incl. its DB) once the normal stack is restored:
+#   docker compose -f docker-compose.alt.yml -p taxisalt down -v
+name: taxisalt
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata_alt:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    image: taxis-backend:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 8080
+      APP_BASE_URL: http://localhost:5175
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      DODO_PAYMENTS_API_KEY: ${DODO_PAYMENTS_API_KEY}
+      DODO_PAYMENTS_WEBHOOK_SECRET: ${DODO_PAYMENTS_WEBHOOK_SECRET}
+      DODO_PRO_PRODUCT_ID: ${DODO_PRO_PRODUCT_ID}
+      DODO_ENV: ${DODO_ENV}
+    ports:
+      - "8081:8080"
+    command: >
+      sh -c "/bin/server migrate && /bin/server seed && /bin/server serve"
+
+  frontend:
+    image: taxis-frontend-alt:latest
+    depends_on:
+      - backend
+    ports:
+      - "5175:80"
+
+volumes:
+  pgdata_alt:
