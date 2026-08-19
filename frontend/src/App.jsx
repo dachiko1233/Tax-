@@ -90,6 +90,7 @@ function AppLayout({ children }) {
 function PublicNav() {
   const loc = useLocation()
   const nav = useNavigate()
+  const { auth } = useAuth()
 
   // "Pricing" smooth-scrolls to the pricing section on the landing page. From
   // any other page, navigate home with #pricing so the landing page scrolls
@@ -106,20 +107,29 @@ function PublicNav() {
 
   return (
     <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="font-serif text-lg font-semibold tracking-tight text-teal-900">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <Link to="/" className="shrink-0 truncate font-serif text-base font-semibold tracking-tight text-teal-900 sm:text-lg">
           SS Tax Engine
         </Link>
-        <nav className="flex items-center gap-5 text-sm">
+        <nav className="flex shrink-0 items-center gap-3 text-sm sm:gap-5">
           <a href="/#pricing" onClick={onPricing} className="text-stone-600 hover:text-stone-900">
             Pricing
           </a>
-          <Link
-            to="/register"
-            className="rounded-lg bg-teal-700 px-3.5 py-1.5 font-medium text-white hover:bg-teal-600"
-          >
-            Get started
-          </Link>
+          {auth ? (
+            <Link
+              to="/app"
+              className="rounded-lg bg-teal-700 px-3 py-1.5 font-medium text-white hover:bg-teal-600 sm:px-3.5"
+            >
+              Go to app
+            </Link>
+          ) : (
+            <Link
+              to="/register"
+              className="rounded-lg bg-teal-700 px-3 py-1.5 font-medium text-white hover:bg-teal-600 sm:px-3.5"
+            >
+              Get started
+            </Link>
+          )}
         </nav>
       </div>
     </header>

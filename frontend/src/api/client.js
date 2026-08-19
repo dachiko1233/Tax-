@@ -1,7 +1,16 @@
 // Thin fetch wrapper around the Go backend. The JWT is held in memory and
 // mirrored to localStorage so a page refresh stays logged in.
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+// Normalize VITE_API_URL so a scheme-less value (e.g. Railway's
+// "backend-xxx.up.railway.app") isn't treated as a relative path — which would
+// glue it onto the frontend origin and break every request. Also drop a
+// trailing slash so `${BASE}${path}` never produces a double slash.
+function normalizeBase(raw) {
+  const v = (raw || 'http://localhost:8080').trim().replace(/\/+$/, '')
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`
+}
+
+const BASE = normalizeBase(import.meta.env.VITE_API_URL)
 
 let token = localStorage.getItem('token') || null
 
